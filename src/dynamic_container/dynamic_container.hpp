@@ -26,58 +26,63 @@ public:
 
     void push_back(BaseType elm)
     {
-        m_internal.push_back(elm);
+        m_internal.push_back(std::make_unique<BaseType>(elm));
     }
 
     template<typename DerivedType>
     void push_back(DerivedType elm)
     {
-        m_internal.push_back((BaseType)elm);
+        m_internal.push_back(std::make_unique<BaseType>(elm));
     }
-    
-    BaseType& at(uint32_t i)
+
+    void at(uint32_t i, BaseType elm)
     {
         if (i >= m_internal.size())
         {
             throw std::out_of_range("i: " + std::to_string(i) + " is out of range");
         }
-        return  m_internal.at(i); 
+        
+        m_internal.at(i) = std::make_unique<BaseType>(elm);
     }
 
-    BaseType& operator[](uint32_t i)
+    template<typename DerivedType>
+    void at(uint32_t i, DerivedType elm)
+    {
+        if (i >= m_internal.size())
+        {
+            throw std::out_of_range("i: " + std::to_string(i) + " is out of range");
+        }
+
+        m_internal.at(i) = std::make_unique<BaseType>(elm);
+    }
+    
+    BaseType* at(uint32_t i)
+    {
+        if (i >= m_internal.size())
+        {
+            throw std::out_of_range("i: " + std::to_string(i) + " is out of range");
+        }
+        return  m_internal.at(i).release(); 
+    }
+
+    BaseType* operator[](uint32_t i)
     {
         return at(i); 
     }
 
     template<typename DerivedType>
-    DerivedType& get_as(uint32_t i)
+    DerivedType* operator[](uint32_t i)
     {
-        auto a = m_internal.at(i);
-        return dynamic_cast<DerivedType&>(a); 
+        return get_as<DerivedType>(i);
     }
-    
-    // template<typename DerivedType>
-    // DerivedType& at(uint32_t i)
-    // {
-    //     if (i >= m_internal.size())
-    //     {
-    //         throw std::out_of_range("i: " + std::to_string(i) + " is out of range");
-    //     }
-    //     return static_cast<DerivedType>(*(m_internal.at(i))); // static_cast<DerivedType*>(m_internal.at(i).release());
-    // }
 
-    // template<typename DerivedType>
-    // DerivedType* operator[](uint32_t i)
-    // {
-    //     return at<DerivedType>(i);
-    // }
-
-    
-
-    
-        
+    template<typename DerivedType>
+    DerivedType* get_as(uint32_t i)
+    {
+        return static_cast<DerivedType*>(m_internal.at(i).release()); 
+    }
+            
 private:
-    std::vector<BaseType> m_internal; 
-    
+    std::vector<std::unique_ptr<BaseType>> m_internal; 
 };
 }
